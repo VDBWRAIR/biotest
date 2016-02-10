@@ -1,7 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*$py.class
+
+# Executables
+bin/
 
 # C extensions
 *.so
@@ -14,7 +16,6 @@ develop-eggs/
 dist/
 downloads/
 eggs/
-.eggs/
 lib/
 lib64/
 parts/
@@ -38,12 +39,15 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .coverage
-.coverage.*
 .cache
 nosetests.xml
 coverage.xml
-*,cover
-.hypothesis/
+cover
+tests/
+log.html
+output.xml
+report.html
+
 
 # Translations
 *.mo
@@ -54,9 +58,15 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+docs/_static/
+docs/_templates/
 
 # PyBuilder
 target/
 
-#Ipython Notebook
-.ipynb_checkpoints
+# Ramdom crud
+*.bak
+*.pyc
+*~
+*.swp
+*.swo

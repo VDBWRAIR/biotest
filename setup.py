@@ -11,4 +11,7 @@ setup(
     description = biotest.__description__,
     license = "GPLv2",
     keywords = biotest.__keywords__,
+    install_requires = [
+        'mock',
+    ],
 )

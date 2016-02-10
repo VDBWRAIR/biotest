@@ -7,14 +7,13 @@ class MockableFile(mock.MagicMock):
     >>> import mock
     >>> with mock.patch('__builtin__.open', MockableFile) as mock_open:
     ...    mock_open.set_contents('foo')
-    ...    print open
     ...    x = open('foo.txt').read()
-    ...    assert x == 'foo'
+    ...    assert x == 'foo', x
+    >>> with mock.patch('__builtin__.open', MockableFile('foo')) as mock_open:
+    ...    x = open('foo.txt').read()
+    ...    assert x == 'foo', x
 
-    #>>> with mock.patch(open, MockableFile('foo') as mock_open:
-    #...    x = open('foo.txt').read()
-    #...    assert x == 'foo'
-    #>>> with mock.patch(open, MockableFile) as mock_open:
+    #>>> with mock.patch('__builtin__.open', MockableFile) as mock_open:
     #...    mock_open.set_contents('foo.txt', 'foo')
     #...    mock_open.set_contents('bar.txt', 'bar')
     #...    x = open('foo.txt').read()
@@ -22,6 +21,7 @@ class MockableFile(mock.MagicMock):
     #...    x = open('bar.txt').read()
     #...    assert x == 'bar'
     '''
+    __file_contents = None
     def __init__(self, *args, **kwargs):
         pass
 
@@ -41,12 +41,14 @@ class MockableFile(mock.MagicMock):
         pass
 
     def read(self):
-        pass
+        return self.__file_contents
 
     def write(self):
         pass
 
     @classmethod
     def set_contents(cls, *args, **kwargs):
-        pass
+        # Not correct way to do this
+        cls.__file_contents = args[0]
+        #cls.__file_contents = 'foo'
 

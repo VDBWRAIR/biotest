@@ -1,6 +1,6 @@
 import mock
 
-class MockableFile(object):
+class MockableFile(mock.MagicMock):
     '''
     Provide easily mockable object for the open call
     '''

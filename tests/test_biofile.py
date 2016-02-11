@@ -1,11 +1,11 @@
-from . import unittest
+from . import unittest, builtins
 import mock
 
 from biotest import FileMocker, MockableFile
 
 class TestFileMockerPatches(unittest.TestCase):
     def test_can_be_used_with_patch(self):
-        with mock.patch('__builtin__.open', FileMocker('foo')) as mo:
+        with mock.patch.object(builtins, 'open', FileMocker('foo')) as mo:
             x = open('anything.txt')
             self.assertIsInstance(x, MockableFile)
             self.assertEqual(x.read(), 'foo')

@@ -69,7 +69,7 @@ class FileMocker(object):
         )
 
     def set_contents(self, contents):
-        if isinstance(contents, basestring):
+        if isinstance(contents, str):
             self._files[''] = contents
         elif isinstance(contents, dict):
             self._files.update(contents)

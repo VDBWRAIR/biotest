@@ -20,5 +20,6 @@ setup(
         'sh',
         'toolz',
         'hypothesis',
+        'biopython',
     ],
 )

@@ -8,6 +8,7 @@ from hypothesis import strategies as st
 ##############
 make_seqrec = lambda id, seq, quals: \
                 SeqRecord(Seq(seq, IUPAC.ambiguous_dna), id=str(id), description='', letter_annotations={'phred_quality':quals})
+
 rec = st.integers(min_value=1, max_value=10).flatmap(
     lambda n:
         st.builds(

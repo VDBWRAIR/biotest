@@ -1,5 +1,4 @@
 from __future__ import print_function
-from . import unittest
 from operator import attrgetter as attr
 from functools import partial
 import sh
@@ -9,27 +8,18 @@ import sys
 import os
 import mock
 
+try:
+    import unittest2 as unittest
+except:
+    import unittest
+
 THISD = os.path.dirname(os.path.abspath(__file__))
 here = partial(os.path.join, THISD)
 
 TESTDIR = os.path.dirname(os.path.abspath(__file__))
 PROJDIR = os.path.dirname(TESTDIR)
 
-
-
-
-# file mocking? http://www.ichimonji10.name/blog/6/
-if sys.version[0] == '2':
-        import __builtin__ as builtins  # pylint:disable=import-error
-else:
-        import builtins  # pylint:disable=import-error
-def mock_file(func, read_data, *args, **kwargs):
-    with mock.patch.object(builtins, 'open', mock.mock_open(read_data=read_data)): #, create = True) as m:
-        with open('_') as handle:
-            '''mock_open doesn't iterate properly, so work-around read it here'''
-            return func(handle.read().split('\n'), *args, **kwargs)
-
-class BioTest(unittest.TestCase):
+class BioTestCase(unittest.TestCase):
     #TODO: avoid transforming filenames to files all the time
     ''' i.e. @as_files  --> converts filenames to files and asserts they exist'''
     def assertFilesEqual(self, fn1, fn2, sort=False, strip=False):
@@ -40,13 +30,14 @@ class BioTest(unittest.TestCase):
         if not hasattr(fn1, 'read'):
             fh1 = open(fn1)
             fh2 = open(fn2)
-        else: fh1, fh2 = fn1, fn2
+        else:
+            fh1, fh2 = fn1, fn2
         tolines = strip_all if strip else list
         lines1, lines2 = tolines(fh1), tolines(fh2)
 
         if sort:
             lines1, lines2 = sorted(lines1), sorted(lines2)
-        self.assertFalse(len(lines1) == 0)
+        self.assertNotEqual(len(lines1), 0)
         return self.assertMultiLineEqual('\n'.join(lines1), '\n'.join(lines2))
 
     def print_file_diff(self, fh1, fh2):

@@ -1,16 +1,15 @@
-from . import unittest
 import mock
 
-from biotest import FileMocker, MockableFile, builtins
+from biotest import FileMocker, MockableFile, builtins, BioTestCase
 
-class TestFileMockerPatches(unittest.TestCase):
+class TestFileMockerPatches(BioTestCase):
     def test_can_be_used_with_patch(self):
         with mock.patch.object(builtins, 'open', FileMocker('foo')) as mo:
             x = open('anything.txt')
             self.assertIsInstance(x, MockableFile)
             self.assertEqual(x.read(), 'foo')
 
-class TestFileMockerStoresContents(unittest.TestCase):
+class TestFileMockerStoresContents(BioTestCase):
     def test_set_single_string_contents_via_set_contents(self):
         x = FileMocker()
         x.set_contents('foo')
@@ -57,7 +56,7 @@ class TestFileMockerStoresContents(unittest.TestCase):
         except IOError:
             self.fail("raised IOError even though 'w' mode")
 
-class TestMockableFile(unittest.TestCase):
+class TestMockableFile(BioTestCase):
     def test_can_set_contents_in_init(self):
         x = MockableFile('foo.txt', contents='foo')
         self.assertEqual(x.read(), 'foo')

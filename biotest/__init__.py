@@ -6,4 +6,4 @@ __description__ = 'Testing framework for python bioinformatics'
 __projectname__ = 'biotest'
 __keywords__ = "bioinformatics, unittest, framework, test"
 
-from biotest import MockableFile
+from biotest.biofile import FileMocker, MockableFile

@@ -72,3 +72,8 @@ class TestMockableFile(BioTestCase):
             fh.write('foo')
             fh.seek(0)
             self.assertEqual(fh.read(), 'foo')
+
+    def test_support_iteration(self):
+        x = ['line1\n', 'line2\n', 'line3\n']
+        fh = MockableFile('foo.txt', contents=''.join(x))
+        self.assertListEqual(x, list(fh))

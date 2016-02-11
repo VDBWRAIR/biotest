@@ -15,6 +15,9 @@ class MockableFile(object):
             self.tfile.write(contents)
             self.tfile.seek(0)
 
+    def __iter__(self):
+        return self.tfile.__iter__()
+
     def __enter__(self):
         return self
 

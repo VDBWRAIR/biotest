@@ -1,8 +1,11 @@
 import mock
 
-from biofile import FileMocker, MockableFile
-from biotest import BioTestCase
-from biohypothesis import seq_record_strategy
+from . import biofile, biotest, biohypothesis
+
+FileMocker = biofile.FileMocker
+MockableFile = biofile.MockableFile
+BioTestCase = biotest.BioTestCase
+seq_record_strategy = biohypothesis.seq_record_strategy
 
 # Simple mocked SeqRecord class
 from functools import partial

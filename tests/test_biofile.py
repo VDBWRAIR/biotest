@@ -1,7 +1,7 @@
-from . import unittest, builtins
+from . import unittest
 import mock
 
-from biotest import FileMocker, MockableFile
+from biotest import FileMocker, MockableFile, builtins
 
 class TestFileMockerPatches(unittest.TestCase):
     def test_can_be_used_with_patch(self):
@@ -34,6 +34,28 @@ class TestFileMockerStoresContents(unittest.TestCase):
     def test_raises_ioerror_if_no_file(self):
         x = FileMocker({'foo.txt': 'bar'})
         self.assertRaises(IOError, x, 'bar.txt')
+
+    def test_file_used_multiple_times(self):
+        x = FileMocker({'foo.txt': 'foo'})
+        self.assertEqual(x('foo.txt').read(), 'foo')
+        self.assertEqual(x('foo.txt').read(), 'foo')
+
+    def test_support_readline(self):
+        x = FileMocker({'foo.txt': 'foo'})('foo.txt')
+        self.assertEqual(x.readline(), 'foo')
+        self.assertEqual(x.readline(), '')
+
+    def test_supports_filepaths(self):
+        x = FileMocker({'/path/foo.txt': 'foo', 'path/bar.txt': 'bar'})
+        self.assertEqual(x('/path/foo.txt').read(), 'foo')
+        self.assertEqual(x('path/bar.txt').read(), 'bar')
+
+    def test_returns_mockablefile_if_missing_name_but_write(self):
+        x = FileMocker()
+        try:
+            x('foo.txt', 'w')
+        except IOError:
+            self.fail("raised IOError even though 'w' mode")
 
 class TestMockableFile(unittest.TestCase):
     def test_can_set_contents_in_init(self):

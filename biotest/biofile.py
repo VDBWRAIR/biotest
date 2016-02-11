@@ -61,9 +61,12 @@ class FileMocker(object):
         elif '' in self._files:
             contents = self._files['']
         else:
-            raise IOError(
-                2, "No such file or directory: '{0}'".format(path)
-            )
+            if 'w' not in mode:
+                raise IOError(
+                    2, "No such file or directory: '{0}'".format(path)
+                )
+            else:
+                contents = None
         return MockableFile(
             path, mode, buffering, contents=contents
         )

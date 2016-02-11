@@ -7,3 +7,9 @@ __projectname__ = 'biotest'
 __keywords__ = "bioinformatics, unittest, framework, test"
 
 from biotest.biofile import FileMocker, MockableFile
+
+# Put this here so others can use it
+try:
+    import __builtin__ as builtins
+except:
+    import builtins as builtins

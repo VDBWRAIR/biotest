@@ -30,20 +30,20 @@ class FileMocker(object):
     Provide easily mockable object for the open call
 
     >>> import mock
-    >>> with mock.patch('__builtin__.open', MockableFile()) as mock_open:
+    >>> with mock.patch('__builtin__.open', FileMocker()) as mock_open:
     ...    mock_open.set_contents('foo')
     ...    x = open('foo.txt').read()
     ...    assert x == 'foo', x
-    >>> with mock.patch('__builtin__.open', MockableFile('foo')) as mock_open:
+    >>> with mock.patch('__builtin__.open', FileMocker('foo')) as mock_open:
     ...    x = open('foo.txt').read()
     ...    assert x == 'foo', x
-    >>> with mock.patch('__builtin__.open', MockableFile()) as mock_open:
+    >>> with mock.patch('__builtin__.open', FileMocker()) as mock_open:
     ...    mock_open.set_contents({'foo.txt': 'foo', 'bar.txt': 'bar'})
     ...    x = open('foo.txt').read()
     ...    assert x == 'foo'
     ...    x = open('bar.txt').read()
     ...    assert x == 'bar'
-    >>> with mock.patch('__builtin__.open', MockableFile({'foo.txt': 'foo', 'bar.txt': 'bar'})) as mock_open:
+    >>> with mock.patch('__builtin__.open', FileMocker({'foo.txt': 'foo', 'bar.txt': 'bar'})) as mock_open:
     ...    x = open('foo.txt').read()
     ...    assert x == 'foo'
     ...    x = open('bar.txt').read()

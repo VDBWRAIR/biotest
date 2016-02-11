@@ -78,3 +78,81 @@ with mock.patch(FileMocker()) as mock_open:
     # You can open a file that does not exist if in write mode
     x = open('foo.txt', 'w')
 ```
+
+### MockSeqRecord
+
+For convienience there is a MockSeqRecord class that simply allows you to utilize
+the mock.MagicMock class that is spec'd around Bio.SeqRecord.SeqRecord.
+That is, it ensures that attributes are correct when you try to access/set them.
+
+```python
+from biotest import MockSeqRecord
+x = MockSeqRecord()
+x.id = 'id'
+x.description = 'description
+x.seq = 'ATGC # YAY, we don't have to make a Seq instance!
+x.foo # Will raise AttributeError as it does not exist in SeqRecord class
+```
+
+### BioTestCase
+
+There is a BioTestCase that inherits directly from unittest.TestCase that gives you
+some nice functionality to test sequence type data. All you need to do is have your
+test classes inherit from it.
+
+```python
+from biotest import BioTestCase, MockableFile, MockSeqRecord
+
+class TestSomething(BioTestCase):
+    def test_make_sure_files_equal(self):
+        f1 = MockableFile('foo.txt', contents='foo')
+        f2 = MockableFile('bar.txt', contents='bar')
+        self.assertFilesEqual(f1, f2) # Will generate AssertionError since contents are not equal
+
+    def test_make_sure_sequence_records_equal(self):
+        s = MockSeqRecord()
+        s.id = 'id'
+        s.description = 'd'
+        s.seq = 'ATGC'
+        s.name = 'name'
+        s.letter_annotations['phred_quality'] = [40,40,40,40]
+        self.assertSeqRecordEqual(s, s) # Will test that s is equal to itself
+```
+
+### Hypothesis testing
+
+There is a slightly developmental test decorator you can use that utilizes the
+hypothesis python module to generate Bio.SeqRecord objects for you and will supply
+them to your test cases
+
+You can see how this is very easy to get randomish SeqRecord objects into your
+tests
+
+```python
+from biotest import seq_record_strategy, BioTestCase
+
+class TestSeqRecord(BioTestCase):
+    @seq_record_strategy
+    def test_something_with_seqrecord(self, record):
+        self.assertSeqRecordEqual(record, record)
+```
+
+You can customize the records that get generated as well:
+
+- min_length
+  Default: 1
+- max_length
+  Default: 250
+- min_qual
+  Default: 0
+- max_qual
+  Default: 40
+- alphabet
+  Default: ATGCN
+
+```python
+class TestSeqRecord(BioTestCase):
+    @seq_record_strategy(min_length=10, max_length=50, min_qual=20, max_qual=30, alphabet='ATGC')
+    def test_something_with_seqrecord(self, record):
+        self.assertSeqRecordEqual(record, record)
+```

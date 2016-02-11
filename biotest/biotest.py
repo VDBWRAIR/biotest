@@ -32,13 +32,17 @@ class BioTestCase(unittest.TestCase):
             fh2 = open(fn2)
         else:
             fh1, fh2 = fn1, fn2
-        tolines = strip_all if strip else list
-        lines1, lines2 = tolines(fh1), tolines(fh2)
+
+        if strip:
+            lines1, lines2 = strip_all(fh1), strip_all(fh2)
+        else:
+            lines1, lines2 = list(fh1), list(fh2)
 
         if sort:
             lines1, lines2 = sorted(lines1), sorted(lines2)
+
         self.assertNotEqual(len(lines1), 0)
-        return self.assertMultiLineEqual('\n'.join(lines1), '\n'.join(lines2))
+        return self.assertMultiLineEqual(''.join(lines1), ''.join(lines2))
 
     def print_file_diff(self, fh1, fh2):
         '''show the diff of two files when a test fails for easy debugging'''
@@ -57,11 +61,11 @@ class BioTestCase(unittest.TestCase):
 
     #TODO: allow for ignoring ids, names, etc.
     #TODO: Use FastqGeneralIterator: https://github.com/biopython/biopython/blob/master/Bio/SeqIO/QualityIO.py#L799
-    def assert_seq_recs_equal(self, seq1, seq2, quality=False):
+    def assertSeqRecordEqual(self, seq1, seq2):
         '''This is necessary because the __eq__ in SeqRecord is weird.'''
         _fields = ['id', 'name', 'description']
         seqstr = compose(str, attr('seq'))
-        self.assertEquals(seq1._per_letter_annotations, seq2._per_letter_annotations)
+        self.assertEquals(seq1.letter_annotations, seq2.letter_annotations)
         self.assertEquals(seqstr(seq1), seqstr(seq2))
         for field in _fields:
             f1, f2 = getattr(seq1, field), getattr(seq2, field)
@@ -69,3 +73,9 @@ class BioTestCase(unittest.TestCase):
             self.assertEquals(f1, f2) #, msg=)
         #self.seqrecs =  list(SeqIO.parse(BytesIO(self.reads), format='fastq'))
 
+
+    def assertAllAboveQual(self, seq, minqual):
+        pass
+
+    def assertBelowQual(self, seq, minqual):
+        pass

@@ -18,6 +18,7 @@ setup(
     install_requires = [
         'mock',
         'sh',
-        'toolz'
+        'toolz',
+        'hypothesis',
     ],
 )

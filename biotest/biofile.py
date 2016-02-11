@@ -15,6 +15,9 @@ class MockableFile(object):
             self.tfile.write(contents)
             self.tfile.seek(0)
 
+    def __iter__(self):
+        return self.tfile.__iter__()
+
     def __enter__(self):
         return self
 
@@ -61,9 +64,12 @@ class FileMocker(object):
         elif '' in self._files:
             contents = self._files['']
         else:
-            raise IOError(
-                2, "No such file or directory: '{0}'".format(path)
-            )
+            if 'w' not in mode:
+                raise IOError(
+                    2, "No such file or directory: '{0}'".format(path)
+                )
+            else:
+                contents = None
         return MockableFile(
             path, mode, buffering, contents=contents
         )

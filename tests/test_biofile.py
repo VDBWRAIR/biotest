@@ -28,14 +28,11 @@ class TestFileMockerStoresContents(unittest.TestCase):
 
     def test_set_multiple_file_via_init(self):
         x = FileMocker({'foo.txt': 'foo', 'bar.txt': 'bar'})
-        print "Testing foo.txt"
         self.assertEqual(x('foo.txt').read(), 'foo')
-        print "Testing bar.txt"
         self.assertEqual(x('bar.txt').read(), 'bar')
 
     def test_raises_ioerror_if_no_file(self):
         x = FileMocker({'foo.txt': 'bar'})
-        print x._files
         self.assertRaises(IOError, x, 'bar.txt')
 
 class TestMockableFile(unittest.TestCase):

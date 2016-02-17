@@ -78,8 +78,8 @@ def interleaved_strategy_factory():
     return st.text().flatmap(
         lambda s:
             st.tuples(
-                seq_rec_strategy_factory(idstrat=st.shared(st.text(alphabet=s), key=s)),
-                seq_rec_strategy_factory(idstrat=st.shared(st.text(alphabet=s), key=s))
+                seq_rec_strategy_factory(max_length=100, idstrat=st.shared(st.text(alphabet=s), key=s)),
+                seq_rec_strategy_factory(max_length=100, idstrat=st.shared(st.text(alphabet=s), key=s))
             )
     )
 

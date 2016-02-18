@@ -74,7 +74,7 @@ def interleaved_strategy_factory():
     *_kwargs are supplied to gen seq_rec_strategy_factory
     to customize forward and reverse reads
     '''
-    strategy = = st.uuids().map(str).flatmap(
+    strategy = st.uuids().map(str).flatmap(
         lambda id:
             st.tuples(
                 seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id)), 

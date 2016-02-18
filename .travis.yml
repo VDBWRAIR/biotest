@@ -13,6 +13,6 @@ install:
 before_script:
     - export PATH=$PATH:$PWD/bin
 script: 
-    - nosetests --with-coverage --cover-erase --cover-package=biotest 
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; nosetests --with-coverage --cover-erase --cover-package=biotest -a '!py27+'; nosetests --with-coverage --cover-erase --cover-package=biotest fi 
 after_success:
     - coveralls

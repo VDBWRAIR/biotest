@@ -1,7 +1,9 @@
 from biotest import biohypothesis, BioTestCase, seqrec
 from hypothesis import strategies as st
 from hypothesis import given
+from nose.plugins.attrib import attr
 
+@attr('py27+')
 class TestMakeSeqRecord(BioTestCase):
     @given(st.text(), biohypothesis.seq_qual_strategy_factory())
     def test_makes_record_with_quality_data(self, id, seq_qual):
@@ -17,6 +19,7 @@ class TestMakeSeqRecord(BioTestCase):
         self.assertEqual(id, x.id)
         self.assertEqual(seq, str(x.seq))
 
+@attr('py27+')
 class TestSeqRecStrategyFactory(BioTestCase):
     @given(biohypothesis.seq_rec_strategy_factory())
     def test_generates_seqecs(self, rec):
@@ -30,6 +33,7 @@ class TestSeqRecStrategyFactory(BioTestCase):
     def test_decorator_generates_seqrecs(self, rec):
         self.assertTrue(hasattr(rec, 'seq'))
 
+@attr('py27+')
 class TestInterleavedStrategyFactory(BioTestCase):
     @given(st.lists(biohypothesis.interleaved_strategy_factory(), max_size=20))
     def test_ensure_ids_same_data_diff(self, interleave):

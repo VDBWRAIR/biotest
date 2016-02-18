@@ -79,8 +79,8 @@ def interleaved_strategy_factory():
             st.tuples(
                 seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id)), 
                 seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id))))
+    return strategy
     
-
 '''
 reads_and_indices = st.integers(min_value=1,max_value=10).flatmap(
     lambda n:

@@ -1,9 +1,17 @@
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
+import operator
+from fn.iters import accumulate
+from toolz.itertoolz import partition
+import string
+from functools import partial
+from itertools import * 
 from hypothesis import strategies as st
-from hypothesis import given
+from hypothesis import given, assume
 from functools import wraps
+from toolz import compose
+from fn import Stream
 
 ##############
 # Hypothesis #
@@ -80,7 +88,52 @@ def interleaved_strategy_factory():
                 seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id)), 
                 seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id))))
     return strategy
-    
+
+def rolling_sum(elem_min, elem_max, length):
+    return st.lists(
+        st.integers(min_value=elem_min,max_value=elem_max), max_size=length, min_size=length
+    ).map(lambda xs: accumulate(xs, operator.add))
+
+@st.composite
+def ref_with_vcf_dicts_strategy_factory(draw):
+    '''
+    first a generator for increasing size numbers and take slices with them.
+    end up with rolling chunks of the reference of parameterizable (but random) size.
+    sample some of those and those be come the REF field.
+    ALT field is whatever
+    POS field is limited by size of reference
+    chrom, like POS, is same accross all reference
+    AO < DP
+    '''
+    seq = draw(st.text(alphabet='ACGT', min_size=10, max_size=20))
+    size = len(seq)
+    #_not = lambda f: lambda x: not f(x)
+    ranges = draw(rolling_sum(1, 3, size/2).map(lambda xs: ifilter(lambda x: x < size, xs)) )#.filter(_not(bool)))
+    pairs = Stream() << partition(2, ranges)
+    POSs = Stream() << imap(operator.itemgetter(0), pairs)
+    pairs_offset_1 = imap(lambda (x,y): (x - 1, y - 1), pairs)
+    chunks = map(lambda (x,y): seq[x:y], pairs_offset_1) 
+    chrom = draw(st.text(string.ascii_letters))
+    vcfs = map(compose(draw, partial(vcf_dict_strategy_factory, chrom)), POSs, chunks)
+    #TODO: ranges must be non-empty. Assuming vcfs for now.
+    assume(len(vcfs) > 0)
+    return (seq, vcfs)
+
+@st.composite
+def vcf_dict_strategy_factory(draw, chrom, pos, ref):
+    '''a generator that returns a single
+    VCF dict at a certain position or w/e for testing `call_base`'''
+    alt = draw(st.text(alphabet='ACGT', min_size=0, max_size=6))
+    #an AO (alternate base count) of 0 doesn't make sense
+    ao = draw(st.integers(min_value=1))
+    dp = ao + draw(st.integers(min_value=1))
+    fields = ['alt', 'ref', 'pos', 'chrom', 'DP', 'AO']
+    values = [alt, ref, pos, chrom, dp, ao]
+    if None in values:
+        raise ValueError("Found none value, did the mapping fail?")
+    return dict(zip(fields, values))
+
+
 '''
 reads_and_indices = st.integers(min_value=1,max_value=10).flatmap(
     lambda n:
@@ -120,4 +173,9 @@ def make_io_matrix(seqs):
 
 
 io_matrix = reads_and_indices.flatmap(make_io_matrix)
+
+
+#st.integers(min_value=1, max_value=3).flatmap(lambda ao:  #not possible with jsut map, need flatmap
+#  st.integers(min_value=0, max_value=2).map(lambda dp:
+#     (ao, ao+dp))).example()
 '''

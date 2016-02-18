@@ -121,23 +121,38 @@ class TestSomething(BioTestCase):
 
 ### Hypothesis testing
 
-There is a slightly developmental test decorator you can use that utilizes the
-hypothesis python module to generate Bio.SeqRecord objects for you and will supply
-them to your test cases
+Hypothesis testing is a new-ish way of testing that allows you to "frame" your tests
+such that you are not locking the functionality of your code with unittests.
 
-You can see how this is very easy to get randomish SeqRecord objects into your
-tests
+Read more at https://hypothesis.readthedocs.org
+
+#### seqrecord hypothesis
+
+You can use the seqrec strategy to generate SeqRecord objects with the hypothesis
+package.
 
 ```python
-from biotest import seq_record_strategy, BioTestCase
-
+from biotest import BioTestCase, seqrec
 class TestSeqRecord(BioTestCase):
-    @seq_record_strategy
+    @given(seqrec())
     def test_something_with_seqrecord(self, record):
         self.assertSeqRecordEqual(record, record)
 ```
 
-You can customize the records that get generated as well:
+#### seqrecord decorator
+To make it a bit easier you can use the test decorator as follows to do the same
+thing
+```python
+from biotest import seq_record_strategy, BioTestCase
+
+class TestSeqRecord(BioTestCase):
+    @seq_record_strategy()
+    def test_something_with_seqrecord(self, record):
+        self.assertSeqRecordEqual(record, record)
+```
+
+You can customize the records that get generated with either way by using any of
+the following args:
 
 - min_length
   Default: 1
@@ -155,4 +170,20 @@ class TestSeqRecord(BioTestCase):
     @seq_record_strategy(min_length=10, max_length=50, min_qual=20, max_qual=30, alphabet='ATGC')
     def test_something_with_seqrecord(self, record):
         self.assertSeqRecordEqual(record, record)
+```
+
+#### Interleaved sequence records
+
+Sometimes you may want to test interleaved sequence records
+This strategy just gives you a tuple of forward, reverse
+Essentially two records from calling `seqrec`, but ensuring the ids are the same
+for the forward and reverse records.
+
+```python
+from biotest import BioTestCase, interleaved_seqrec
+class TestSeqRecord(BioTestCase):
+    @given(interleaved_seqrec)
+    def test_showing_off_interleaved(self, seqrec)
+        f, r = seqrec
+        self.assertTrue(f.id, r.id)
 ```

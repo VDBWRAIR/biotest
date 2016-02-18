@@ -68,17 +68,18 @@ def seq_record_strategy(*args, **kwargs):
         return wrap_f
     return wrapper
 
-#interleaved_strategy_factory = st.uuids().map(str).flatmap(
-#    lambda id:
-#        st.tuples(seqrecstrat(st.shared(st.just(id), key=id)), seqrecstrat(st.shared(st.just(id), key=id))))
-#
-
-interleaved_strategy_factory = st.uuids().map(str).flatmap(
-    lambda id:
-        st.tuples(
-            seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id)), 
-            seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id))))
-
+def interleaved_strategy_factory():
+    '''
+    Generate interleaved fastq that guarantees ids are same for pairs
+    *_kwargs are supplied to gen seq_rec_strategy_factory
+    to customize forward and reverse reads
+    '''
+    strategy = = st.uuids().map(str).flatmap(
+        lambda id:
+            st.tuples(
+                seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id)), 
+                seq_rec_strategy_factory(5, 20, idstrat=st.shared(st.just(id), key=id))))
+    
 
 '''
 reads_and_indices = st.integers(min_value=1,max_value=10).flatmap(

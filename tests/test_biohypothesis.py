@@ -31,7 +31,7 @@ class TestSeqRecStrategyFactory(BioTestCase):
         self.assertTrue(hasattr(rec, 'seq'))
 
 class TestInterleavedStrategyFactory(BioTestCase):
-    @given(st.lists(biohypothesis.interleaved_strategy_factory, max_size=20))
+    @given(st.lists(biohypothesis.interleaved_strategy_factory(), max_size=20))
     def test_ensure_ids_same_data_diff(self, interleave):
         ids = list()
         for f,r in interleave:

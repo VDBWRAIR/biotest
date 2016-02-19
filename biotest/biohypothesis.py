@@ -1,9 +1,9 @@
+from __future__ import print_function
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
 import operator
 from fn.iters import accumulate
-from toolz.dicttoolz import update_in
 from toolz.itertoolz import partition
 import string
 from functools import partial
@@ -15,7 +15,6 @@ from toolz import compose
 from fn import Stream
 from pyparsing import ParseException, Literal,  Word, \
    alphas, nums, quotedString, delimitedList, removeQuotes
-
 ##############
 # Hypothesis #
 ##############
@@ -170,7 +169,7 @@ def parse_header_line(lineString):
     try:
         res = line.leaveWhitespace().parseString(lineString)
     except ParseException as e:
-        print lineString
+        print(lineString)
         raise e
     metadata_type = res[0] # e.g. INFO/FORMAT
     schema = dict(pairs(res[1:]))

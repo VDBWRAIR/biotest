@@ -3,3 +3,4 @@ toolz
 fn
 hypothesis
 biopython
+pyparsing

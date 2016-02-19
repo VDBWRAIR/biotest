@@ -111,8 +111,8 @@ def ref_with_vcf_dicts_strategy_factory(draw):
     ranges = draw(rolling_sum(1, 3, size/2).map(lambda xs: ifilter(lambda x: x < size, xs)) )#.filter(_not(bool)))
     pairs = Stream() << partition(2, ranges)
     POSs = Stream() << imap(operator.itemgetter(0), pairs)
-    pairs_offset_1 = imap(lambda (x,y): (x - 1, y - 1), pairs)
-    chunks = map(lambda (x,y): seq[x:y], pairs_offset_1) 
+    pairs_offset_1 = imap(lambda x: (x[0] - 1, x[1] - 1), pairs)
+    chunks = map(lambda x: seq[x[0]:x[1]], pairs_offset_1) 
     chrom = draw(st.text(string.ascii_letters))
     vcfs = map(compose(draw, partial(vcf_dict_strategy_factory, chrom)), POSs, chunks)
     #TODO: ranges must be non-empty. Assuming vcfs for now.

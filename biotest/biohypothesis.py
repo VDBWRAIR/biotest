@@ -7,14 +7,14 @@ from toolz.dicttoolz import update_in
 from toolz.itertoolz import partition
 import string
 from functools import partial
-from itertools import *
+from itertools import takewhile, imap, ifilter, izip
 from hypothesis import strategies as st
 from hypothesis import given, assume
 from functools import wraps
 from toolz import compose
 from fn import Stream
-from pyparsing import Literal,  Word, \
-   alphas, nums, quotedString, delimitedList
+from pyparsing import ParseException, Literal,  Word, \
+   alphas, nums, quotedString, delimitedList, removeQuotes
 
 ##############
 # Hypothesis #
@@ -141,35 +141,46 @@ def vcf_dict_strategy_factory(draw, chrom, pos, ref):
 
 #TODO: now consensus should throw error if AO > DP
 def parse_header(lines):
-    header =  takwhile(lambda x: x[0] == '#', lines)
+    def schema2strategies(schema):
+        types = {
+            'Integer' : st.integers(),
+            'Float' : st.floats(),
+            'String' : st.text(max_size=10)
+        }
+        strategy = types[schema['Type']]
+        return schema['ID'], strategy
+    header =  takewhile(lambda x: x[0] == '#', lines)
     isMedata = lambda x: x.startswith("##INFO") or x.startswith("##FORMAT")
     metadata = ifilter(isMedata, header)
-    result = imap(parse_header_line, metadata)
-    return result
+    result = imap(compose(schema2strategies, parse_header_line), metadata)
+    return st.fixed_dictionaries(dict(result))
 
+#strategy_from_header = compose(st.fixed_dictionaries, parse_header)
 #TODO: A way to add arbitrary contraints (< 1), and contraints based on relations (AO < DP). use `assume` ?
+# some of the
 def parse_header_line(lineString):
     lineName = Literal("##").suppress() + (Literal("FORMAT") | Literal("INFO"))
     sentence = quotedString(r'"').setParseAction(removeQuotes)
     def make_kv(key, valParser):
         return Literal(key) + Literal("=").suppress() + valParser
-    keyVal = make_kv("ID", Word(alphas + '.')) | make_kv("Type", (Literal("Float") | Literal("String") | Literal("Integer"))) | make_kv("Description", sentence) | make_kv("Number",  Word(alphas + nums))
+    keyVal = make_kv("ID", Word(alphas + nums + '.')) | make_kv("Type", (Literal("Float") | Literal("String") | Literal("Integer"))) | make_kv("Description", sentence) | make_kv("Number",  Word(alphas + nums))
     fields = delimitedList(keyVal, ",")
     line = lineName + Literal("=<").suppress() + fields + Literal(">").suppress()
     pairs = lambda xs: [] if len(xs) == 0 else [(xs[0], xs[1])] + pairs(xs[2:])
-    res = line.leaveWhitespace().parseString(lineString)
+    try:
+        res = line.leaveWhitespace().parseString(lineString)
+    except ParseException as e:
+        print lineString
+        raise e
     metadata_type = res[0] # e.g. INFO/FORMAT
     schema = dict(pairs(res[1:]))
-    types = {
-        'Integer' : int,
-        'Float' : float,
-        'String' : str
-    }
-    schema['Type'] = types[schema['Type']]
-    return metadata_type, schema
+    return schema
+
+    #return metadata_type, schema
     #return update_in(d['INFO'], ['Type'], compose(types.__getitem__, str.lower))
     #res = line.leaveWhitespace().parseString(r'##INFO=<ID=technology.ILLUMINA,Number=A,Type=Float,Description="Fraction of observations supporting the alternate observed in reads from ILLUMINA">')
 
+# could create a generator for CIGAR strings at some point
 '''
 reads_and_indices = st.integers(min_value=1,max_value=10).flatmap(
     lambda n:

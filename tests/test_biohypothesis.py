@@ -2,10 +2,8 @@ import string
 
 from biotest import biohypothesis, BioTestCase, seqrec
 from hypothesis import strategies as st
-from hypothesis import given, assume, settings
+from hypothesis import given, assume
 from nose.plugins.attrib import attr
-
-settings.default.perform_health_check = False
 
 # This makes sure valid id for SeqRecord as SeqRecord doesn't test
 # for these things(yay hypothesis)

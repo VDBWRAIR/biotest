@@ -7,7 +7,7 @@ from fn.iters import accumulate
 from toolz.itertoolz import partition
 import string
 from functools import partial
-from itertools import takewhile, imap, ifilter, izip
+from biotest.compat import imap, ifilter, takewhile, izip 
 from hypothesis import strategies as st
 from hypothesis import given, assume
 from functools import wraps

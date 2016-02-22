@@ -5,6 +5,8 @@ from hypothesis import strategies as st
 from hypothesis import given, assume, settings
 from nose.plugins.attrib import attr
 
+settings.default.perform_health_check = False
+
 # This makes sure valid id for SeqRecord as SeqRecord doesn't test
 # for these things(yay hypothesis)
 #assume(not set(['','\n','>',' ','\r']).intersection(set(id)))
@@ -33,7 +35,6 @@ class TestMakeSeqRecord(BioTestCase):
         self.assertEqual('>{0}\n{1}\n'.format(id, seq), x.format('fasta'))
 
 @attr('py27+')
-@settings(perform_health_check=False)
 class TestSeqRecStrategyFactory(BioTestCase):
     @given(biohypothesis.seq_rec_strategy_factory())
     def test_generates_seqecs(self, rec):

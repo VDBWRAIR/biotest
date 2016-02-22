@@ -56,3 +56,23 @@ class TestInterleavedStrategyFactory(BioTestCase):
             ids.append(f)
         # Just make sure we are making different id's for each pair(for sanity)
         self.assertNotEqual(1, set(ids))
+
+class TestVCFStrategy(BioTestCase):
+    @given(biohypothesis.vcf_dict_strategy_factory('chr1', 1, 'A'))
+    def test_ensure_useful_dict(self, vcfrec):
+        self.assertEqual(1, vcfrec['pos'])
+        self.assertEqual('chr1', vcfrec['chrom'])
+        self.assertEqual('A', vcfrec['ref'])
+        self.assertGreater(vcfrec['DP'], vcfrec['AO'])
+
+    @given(biohypothesis.ref_with_vcf_dicts_strategy_factory())
+    def test_ensure_useful_records(self, seq_vcfs):
+        seq, vcfs = list(seq_vcfs[0]), list(seq_vcfs[1])
+        self.assertGreaterEqual(len(seq), len(vcfs))
+        # Assert all vcf ref seq chunks are same as on actual reference sequence
+        # at specified position
+        for vcf in vcfs:
+            r = vcf['ref']
+            p = vcf['pos']
+            refseq = ''.join(seq[p-1:p+len(r)-1])
+            self.assertEqual(refseq, r)

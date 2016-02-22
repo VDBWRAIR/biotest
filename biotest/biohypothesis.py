@@ -87,38 +87,44 @@ def rolling_sum(elem_min, elem_max, length):
 @st.composite
 def ref_with_vcf_dicts_strategy_factory(draw):
     '''
-    first a generator for increasing size numbers and take slices with them.
-    end up with rolling chunks of the reference of parameterizable (but random) size.
-    sample some of those and those be come the REF field.
-    ALT field is whatever
-    POS field is limited by size of reference
-    chrom, like POS, is same accross all reference
-    AO < DP
+    Generate vcf records for randomish locations along a randomishly generated
+    reference sequence. Each vcf record generator will have a randomish sized
+    "chunk" of the reference to use
+
+    Returns (reference sequence(str), iterable(vcf dicts))
     '''
     seq = draw(st.text(alphabet='ACGT', min_size=10, max_size=20))
     size = len(seq)
-    ranges = draw(rolling_sum(1, 3, size/2).map(lambda xs: ifilter(lambda x: x < size, xs)) )#.filter(_not(bool)))
+    # This gets you a list of numbers that are randomish and increasing
+    ranges = draw(rolling_sum(1, 3, int(size/2)).map(lambda xs: ifilter(lambda x: x < size, xs)) )#.filter(_not(bool)))
     # Stream lets you re-use a generator without draining it.
+    # Pairs will hold start/stop values for each part of sequence
     pairs = Stream() << partition(2, ranges)
+    # POSs will contain the start position of each vcf row
     POSs = Stream() << imap(operator.itemgetter(0), pairs)
     # VCF files start at index 1; python starts at 0
     pairs_offset_1 = imap(lambda x: (x[0] - 1, x[1] - 1), pairs)
-    #grab the pieces of the reference
+    #grab the pieces of the reference to build our Alts from
     chunks = map(lambda x: seq[x[0]:x[1]], pairs_offset_1)
     #random chromosome name
     chrom = draw(st.text(string.ascii_letters))
+    # Draw a new record for each of the Positions we have made
     vcfs = map(compose(draw, partial(vcf_dict_strategy_factory, chrom)), POSs, chunks)
     #TODO: ranges must be non-empty. Assuming vcfs for now.
-    assume(len(vcfs) > 0)
+    # vcfs can be a a generator
+    #assume(len(vcfs) > 0)
     return (seq, vcfs)
 
 @st.composite
 def vcf_dict_strategy_factory(draw, chrom, pos, ref):
-    '''a generator that returns a single
-    VCF dict at a certain position or w/e for testing `call_base`'''
-    alts = draw(st.lists(st.text(alphabet='ACGT', min_size=0, max_size=6)), min_size=1, max_size=3)
+    '''
+    a generator that returns a single
+    VCF dict at a certain position or w/e for testing `call_base`
+    '''
+    alts = draw(st.lists(st.text(alphabet='ACGT', min_size=0, max_size=6), min_size=1, max_size=3))
     #an AO (alternate base count) of 0 doesn't make sense
     ao = draw(st.integers(min_value=1))
+    # dp is the total depth at the position
     dp = ao + draw(st.integers(min_value=1))
     fields = ['alt', 'ref', 'pos', 'chrom', 'DP', 'AO']
     values = [alts, ref, pos, chrom, dp, ao]

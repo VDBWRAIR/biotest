@@ -43,26 +43,14 @@ def make_seqrec(id, seq, quals=None):
         Seq(seq, IUPAC.ambiguous_dna), id=id, description='', letter_annotations=quals
     )
 
-def seq_rec_strategy_factory(min_length=1, max_length=250, min_qual=0, max_qual=40, alphabet='ATGCN', idstrat=st.text()):
-    '''
-    Factory to generate Strategy that build sequence records
 
-    min_length - Minimum sequence length
-    max_length - Maximum sequence length
-    alphabet - Choices for nucleotides
-    min_qual - Minimum quality
-    max_qual - Maximum quality
-    idstrat - strategy that generates sequence ids
-    '''
-    return st.integers(min_value=min_length, max_value=max_length).flatmap(
-        lambda n:
-            st.builds(
-                make_seqrec,
-                idstrat,
-                st.text(alphabet=alphabet, min_size=n, max_size=n),
-                st.lists(st.integers(min_value=min_qual, max_value=max_qual), min_size=n, max_size=n)
-            )
-    )
+@st.composite
+def seq_rec_strategy_factory(draw, min_length=1, max_length=250, min_qual=0, max_qual=40, alphabet='ATGCN', idstrat=st.text()):
+    seq_len = draw(st.integers(min_value=min_length, max_value=max_length))
+    _id = draw(idstrat)
+    seq = draw(st.text(alphabet=alphabet, min_size=seq_len, max_size=seq_len))
+    qual = draw(st.lists(st.integers(min_value=min_qual, max_value=max_qual), min_size=seq_len, max_size=seq_len))
+    return make_seqrec(_id, seq, qual)
 
 def seq_record_strategy(*args, **kwargs):
     '''

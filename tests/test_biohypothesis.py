@@ -57,6 +57,7 @@ class TestInterleavedStrategyFactory(BioTestCase):
         # Just make sure we are making different id's for each pair(for sanity)
         self.assertNotEqual(1, set(ids))
 
+@attr('py27+')
 class TestVCFStrategy(BioTestCase):
     @given(biohypothesis.vcf_dict_strategy_factory('chr1', 1, 'A'))
     def test_ensure_useful_dict(self, vcfrec):

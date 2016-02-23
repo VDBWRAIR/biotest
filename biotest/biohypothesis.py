@@ -7,7 +7,7 @@ from fn.iters import accumulate
 from toolz.itertoolz import partition
 import string
 from functools import partial
-from .compat import imap, ifilter, takewhile, izip 
+from .compat import imap, ifilter, takewhile, izip
 from hypothesis import strategies as st
 from hypothesis import given, assume
 from functools import wraps
@@ -126,9 +126,12 @@ def vcf_dict_strategy_factory(draw, chrom, pos, ref):
         ao = draw(st.integers(min_value=1))
         dp = ao + draw(st.integers(min_value=1))
         return ao, dp
-    if hasattr(alts, '__iter__') == list:
+    if hasattr(alts, '__iter__'):
         aos_and_dps = [ao_and_dp() for i in xrange(len(alts))]
         ao, dp = zip(*aos_and_dps)
+        #NOTE: Don't know if DP is guaranteed greater than all the AOs summed. probably.
+        dp  = sum(ao) + draw(st.integers(min_value=1)) #Don't know if DP is guaranteed greater than all the AOs summed. probably.
+        #dp = max(dp)
     else:
         ao, dp = ao_and_dp()
     #an AO (alternate base count) of 0 doesn't make sense

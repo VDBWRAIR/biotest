@@ -100,6 +100,18 @@ There is a BioTestCase that inherits directly from unittest.TestCase that gives 
 some nice functionality to test sequence type data. All you need to do is have your
 test classes inherit from it.
 
+Additional assertions you get with BioTestCase:
+
+- assertFilesEqual
+  Takes two file handles or paths and asserts the contents are equal exactly
+  You can supply sort=True to sort the contents as well as strip=True to strip
+  all newlines
+- assertSeqRecordEqual
+  Takes two Bio.SeqRecord.SeqRecord objects and compares them
+  Asserts `.letter_annotations` is equal in both sequences
+  Asserts `.seq` is equal in both sequences
+  Asserts `.id`, `.name` and `.description` are equal
+
 ```python
 from biotest import BioTestCase, MockableFile, MockSeqRecord
 

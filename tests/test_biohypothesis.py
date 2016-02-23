@@ -64,7 +64,10 @@ class TestVCFStrategy(BioTestCase):
         self.assertEqual(1, vcfrec['pos'])
         self.assertEqual('chr1', vcfrec['chrom'])
         self.assertEqual('A', vcfrec['ref'])
-        self.assertGreater(vcfrec['DP'], vcfrec['AO'])
+        if type(vcfrec['AO']) == int:
+             self.assertGreater(vcfrec['DP'], vcfrec['AO'])
+        else:
+            self.assertGreater(vcfrec['DP'], sum(vcfrec['AO']))
 
     @given(biohypothesis.ref_with_vcf_dicts_strategy_factory())
     def test_ensure_useful_records(self, seq_vcfs):

@@ -127,7 +127,7 @@ def vcf_dict_strategy_factory(draw, chrom, pos, ref):
         dp = ao + draw(st.integers(min_value=1))
         return ao, dp
     if hasattr(alts, '__iter__'):
-        aos_and_dps = [ao_and_dp() for i in xrange(len(alts))]
+        aos_and_dps = [ao_and_dp() for i in range(len(alts))]
         ao, dp = zip(*aos_and_dps)
         #NOTE: Don't know if DP is guaranteed greater than all the AOs summed. probably.
         dp  = sum(ao) + draw(st.integers(min_value=1)) #Don't know if DP is guaranteed greater than all the AOs summed. probably.

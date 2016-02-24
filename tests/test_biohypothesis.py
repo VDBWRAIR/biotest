@@ -96,7 +96,25 @@ class TestVCFHeaderParser(BioTestCase):
     def test_strategy_from_freebayes(self, vcfrow):
         self.assertIn('DP', vcfrow)
 
-    def test_parses_freebayes(self):
+    def test_parses_freebayes_lines(self):
+        for line in open(self.vcf_header_files[0]):
+            if line.startswith('##INFO') or line.startswith('##FORMAT'):
+                biohypothesis.parse_header_line(line)
+
+    @given(biohypothesis.vcf_to_hypothesis_strategy_factory(open(vcf_header_files[1])))
+    def test_strategy_from_ngs_mapper(self, vcfrow):
+        self.assertIn('DP', vcfrow)
+
+    def test_parses_ngs_mapper_lines(self):
         for line in open(self.vcf_header_files[1]):
+            if line.startswith('##INFO') or line.startswith('##FORMAT'):
+                biohypothesis.parse_header_line(line)
+
+    @given(biohypothesis.vcf_to_hypothesis_strategy_factory(open(vcf_header_files[2])))
+    def test_strategy_from_bcftools(self, vcfrow):
+        self.assertIn('DP', vcfrow)
+
+    def test_parses_bcftools_lines(self):
+        for line in open(self.vcf_header_files[2]):
             if line.startswith('##INFO') or line.startswith('##FORMAT'):
                 biohypothesis.parse_header_line(line)

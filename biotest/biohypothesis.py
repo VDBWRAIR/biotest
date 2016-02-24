@@ -173,7 +173,19 @@ def parse_header_line(lineString):
     sentence = quotedString(r'"').setParseAction(removeQuotes)
     def make_kv(key, valParser):
         return Literal(key) + Literal("=").suppress() + valParser
-    keyVal = make_kv("ID", Word(alphas + nums + '.')) | make_kv("Type", (Literal("Float") | Literal("String") | Literal("Integer"))) | make_kv("Description", sentence) | make_kv("Number",  Word(alphas + nums))
+    keyVal = make_kv(
+        "ID", Word(alphas + nums + '.')
+    ) | make_kv(
+            "Type", (
+                Literal("Float") |
+                Literal("String") |
+                Literal("Integer") |
+                Literal("Character") |
+                Literal("Flag")
+            )
+        ) | \
+        make_kv("Description", sentence) | \
+        make_kv("Number",  Word(alphas + nums))
     fields = delimitedList(keyVal, ",")
     line = lineName + Literal("=<").suppress() + fields + Literal(">").suppress()
     pairs = lambda xs: [] if len(xs) == 0 else [(xs[0], xs[1])] + pairs(xs[2:])

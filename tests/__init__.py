@@ -7,4 +7,5 @@ if sys.version[2] != '6':
     from hypothesis import strategies as st
     st.text().example()
 
-
+from os.path import dirname, abspath, join
+THIS = dirname(abspath(__file__))

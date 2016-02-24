@@ -146,6 +146,8 @@ def vcf_to_hypothesis_strategy_factory(lines):
     '''
     def schema2strategies(schema):
         types = {
+            'Character' : st.characters(),
+            'Flag' : st.booleans(),
             'Integer' : st.integers(),
             'Float' : st.floats(),
             'String' : st.text(max_size=10)

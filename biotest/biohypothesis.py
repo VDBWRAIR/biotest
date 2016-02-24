@@ -122,18 +122,15 @@ def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     VCF dict at a certain position or w/e for testing `call_base`'''
     an_alt = st.text(alphabet='ACGT', min_size=0, max_size=6)
     alts = draw(st.lists(an_alt, min_size=2, max_size=4) | an_alt)
-    def ao_and_dp():
-        ao = draw(st.integers(min_value=1))
-        dp = ao + draw(st.integers(min_value=1))
-        return ao, dp
+    draw_ao = lambda: draw(st.integers(min_value=1))
+    draw_dp = lambda: draw(st.integers(min_value=0))
     if hasattr(alts, '__iter__'):
-        aos_and_dps = [ao_and_dp() for i in range(len(alts))]
-        ao, dp = zip(*aos_and_dps)
+        ao = [draw_ao() for i in range(len(alts))]
         #NOTE: Don't know if DP is guaranteed greater than all the AOs summed. probably.
-        dp  = sum(ao) + draw(st.integers(min_value=1)) #Don't know if DP is guaranteed greater than all the AOs summed. probably.
-        #dp = max(dp)
+        dp  = sum(ao) + draw_dp() #Don't know if DP is guaranteed greater than all the AOs summed. probably.
     else:
-        ao, dp = ao_and_dp()
+        ao = draw_ao()
+        dp = ao + draw_dp()
     #an AO (alternate base count) of 0 doesn't make sense
     fields = ['alt', 'ref', 'pos', 'chrom', 'DP', 'AO']
     values = [alts, ref, pos, chrom, dp, ao]

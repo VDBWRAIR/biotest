@@ -1,9 +1,12 @@
 import string
+from os.path import join, dirname, basename, abspath
 
 from biotest import biohypothesis, BioTestCase, seqrec
 from hypothesis import strategies as st
 from hypothesis import given, assume
 from nose.plugins.attrib import attr
+
+from . import THIS
 
 # This makes sure valid id for SeqRecord as SeqRecord doesn't test
 # for these things(yay hypothesis)
@@ -80,3 +83,20 @@ class TestVCFStrategy(BioTestCase):
             p = vcf['pos']
             refseq = ''.join(seq[p-1:p+len(r)-1])
             self.assertEqual(refseq, r)
+
+@attr('py27+')
+class TestVCFHeaderParser(BioTestCase):
+    vcf_header_files = [
+        join(THIS, 'freebayes.header.vcf'),
+        join(THIS, 'ngs_mapper.header.vcf'),
+        join(THIS, 'bcftools.header.vcf')
+    ]
+
+    @given(biohypothesis.vcf_to_hypothesis_strategy_factory(open(vcf_header_files[0])))
+    def test_strategy_from_freebayes(self, vcfrow):
+        self.assertIn('DP', vcfrow)
+
+    def test_parses_freebayes(self):
+        for line in open(self.vcf_header_files[1]):
+            if line.startswith('##INFO') or line.startswith('##FORMAT'):
+                biohypothesis.parse_header_line(line)

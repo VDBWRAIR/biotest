@@ -142,7 +142,11 @@ def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     return dict(zip(fields, values))
 
 #TODO: now consensus should throw error if AO > DP
-def parse_header(lines):
+def vcf_to_hypothesis_strategy_factory(lines):
+    '''
+    Takes an iterator that yields vcf header lines and returns a
+    vcf dictionary strategy
+    '''
     def schema2strategies(schema):
         types = {
             'Integer' : st.integers(),
@@ -151,9 +155,13 @@ def parse_header(lines):
         }
         strategy = types[schema['Type']]
         return schema['ID'], strategy
+    # Will contain only lines that start with #(non vcf rows)
     header =  takewhile(lambda x: x[0] == '#', lines)
+    # Function to filter and get only INFO and FORMAT header lines
     isMedata = lambda x: x.startswith("##INFO") or x.startswith("##FORMAT")
+    # Filters the header to exclude all the other junk
     metadata = ifilter(isMedata, header)
+    # Parse each header line of interest
     result = imap(compose(schema2strategies, parse_header_line), metadata)
     return st.fixed_dictionaries(dict(result))
 

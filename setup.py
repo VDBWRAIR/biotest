@@ -6,6 +6,13 @@ import shutil
 shutil.copy('biotest/__meta__.py', './')
 import __meta__
 
+def requires():
+    ''' read requirements.txt and use for install_requires '''
+    req = []
+    with open('requirements.txt') as fh:
+        req = fh.readlines()
+    return req
+
 setup(
     name = __meta__.__projectname__,
     version = __meta__.__release__,
@@ -15,11 +22,5 @@ setup(
     description = __meta__.__description__,
     license = "GPLv2",
     keywords = __meta__.__keywords__,
-    install_requires = [
-        'mock',
-        'sh',
-        'toolz',
-        'hypothesis',
-        'biopython',
-    ],
+    install_requires = requires(),
 )

@@ -1,1 +1,8 @@
+mock
+sh
 future
+toolz
+fn
+hypothesis
+biopython
+pyparsing

@@ -6,6 +6,8 @@ FileMocker = biofile.FileMocker
 MockableFile = biofile.MockableFile
 BioTestCase = biotest.BioTestCase
 seq_record_strategy = biohypothesis.seq_record_strategy
+seqrec = biohypothesis.seq_rec_strategy_factory
+interleaved_seqrec = biohypothesis.interleaved_strategy_factory
 
 # Simple mocked SeqRecord class
 from functools import partial

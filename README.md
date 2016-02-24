@@ -100,6 +100,25 @@ There is a BioTestCase that inherits directly from unittest.TestCase that gives 
 some nice functionality to test sequence type data. All you need to do is have your
 test classes inherit from it.
 
+Additional assertions you get with BioTestCase:
+
+- assertFilesEqual
+ 
+  Takes two file handles or paths and asserts the contents are equal exactly
+
+  You can supply sort=True to sort the contents as well as strip=True to strip
+  all newlines
+
+- assertSeqRecordEqual
+
+  Takes two Bio.SeqRecord.SeqRecord objects and compares them
+  
+  Asserts `.letter_annotations` is equal in both sequences
+  
+  Asserts `.seq` is equal in both sequences
+  
+  Asserts `.id`, `.name` and `.description` are equal
+
 ```python
 from biotest import BioTestCase, MockableFile, MockSeqRecord
 
@@ -121,23 +140,38 @@ class TestSomething(BioTestCase):
 
 ### Hypothesis testing
 
-There is a slightly developmental test decorator you can use that utilizes the
-hypothesis python module to generate Bio.SeqRecord objects for you and will supply
-them to your test cases
+Hypothesis testing is a new-ish way of testing that allows you to "frame" your tests
+such that you are not locking the functionality of your code with unittests.
 
-You can see how this is very easy to get randomish SeqRecord objects into your
-tests
+Read more at https://hypothesis.readthedocs.org
+
+#### seqrecord hypothesis
+
+You can use the seqrec strategy to generate SeqRecord objects with the hypothesis
+package.
 
 ```python
-from biotest import seq_record_strategy, BioTestCase
-
+from biotest import BioTestCase, seqrec
 class TestSeqRecord(BioTestCase):
-    @seq_record_strategy
+    @given(seqrec())
     def test_something_with_seqrecord(self, record):
         self.assertSeqRecordEqual(record, record)
 ```
 
-You can customize the records that get generated as well:
+#### seqrecord decorator
+To make it a bit easier you can use the test decorator as follows to do the same
+thing
+```python
+from biotest import seq_record_strategy, BioTestCase
+
+class TestSeqRecord(BioTestCase):
+    @seq_record_strategy()
+    def test_something_with_seqrecord(self, record):
+        self.assertSeqRecordEqual(record, record)
+```
+
+You can customize the records that get generated with either way by using any of
+the following args:
 
 - min_length
   Default: 1
@@ -155,4 +189,57 @@ class TestSeqRecord(BioTestCase):
     @seq_record_strategy(min_length=10, max_length=50, min_qual=20, max_qual=30, alphabet='ATGC')
     def test_something_with_seqrecord(self, record):
         self.assertSeqRecordEqual(record, record)
+```
+
+#### Interleaved sequence records
+
+Sometimes you may want to test interleaved sequence records
+This strategy just gives you a tuple of forward, reverse
+Essentially two records from calling `seqrec`, but ensuring the ids are the same
+for the forward and reverse records.
+
+```python
+from biotest import BioTestCase, interleaved_seqrec
+class TestSeqRecord(BioTestCase):
+    @given(interleaved_seqrec)
+    def test_showing_off_interleaved(self, seqrec)
+        f, r = seqrec
+        self.assertTrue(f.id, r.id)
+```
+
+#### VCF Records
+
+You can generate VCF records in a few different ways:
+
+```python
+from biotest import BioTestCase
+from biotest import biohypothesis
+
+class TestVCF(BioTestCase):
+    @given(biohypothesis.vcf_dict_strategy_factory('chr1', 1, 'A'))
+    def test_vcf_record(self, vcfdict):
+        #vcfdict will contain common headers that freebayes outputs
+        # and all fields, regardless if they are FORMAT or INFO are flattened
+        # into the dictionary
+        self.assertEqual(1, vcfrec['pos'])
+
+    @given(biohypothesis.ref_with_vcf_dicts_strategy_factory())
+    def test_vcf_records_with_reference(self, seq_vcfs):
+        # ref_with_vcf_dicts_strategy_factory returns a tuple of
+        # (ref_sequence, iterable of vcf_record_dicts)
+        seq, vcfs = list(seq_vcfs[0]), list(seq_vcfs[1])
+        self.assertGreaterEqual(len(seq), len(vcfs))
+        # Assert all vcf ref seq chunks are same as on actual reference sequence
+        # at specified position
+        for vcf in vcfs:
+            r = vcf['ref']
+            p = vcf['pos']
+            refseq = ''.join(seq[p-1:p+len(r)-1])
+            self.assertEqual(refseq, r)
+
+    @given(biohypothesis.vcf_to_hypothesis_strategy_factory(open('tests/freebayes.header.vcf')))
+    def test_vcf_records_from_vcf_file(self, vcfrow):
+        # Another very simple way to generate vcf rows is to supply an existing
+        # vcf file such as the included test/example freebayes.header.vcf file
+        self.assertIn('DB', vcfrow)
 ```

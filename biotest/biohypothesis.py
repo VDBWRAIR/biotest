@@ -115,22 +115,20 @@ def ref_with_vcf_dicts_strategy_factory(draw):
     #assume(len(vcfs) > 0)
     return (seq, vcfs)
 
+
+
 #TODO: combine parse_header with ref_with_vcf_dicts_strategy_factory so that the generated VCF records match the reference sequence
 @st.composite
 def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     '''a generator that returns a single
     VCF dict at a certain position or w/e for testing `call_base`'''
     an_alt = st.text(alphabet='ACGT', min_size=0, max_size=6)
-    alts = draw(st.lists(an_alt, min_size=2, max_size=4) | an_alt)
+    alts = draw(st.lists(an_alt, min_size=1, max_size=4))
     draw_ao = lambda: draw(st.integers(min_value=1))
     draw_dp = lambda: draw(st.integers(min_value=0))
-    if hasattr(alts, '__iter__'):
-        ao = [draw_ao() for i in range(len(alts))]
-        #NOTE: Don't know if DP is guaranteed greater than all the AOs summed. probably.
-        dp  = sum(ao) + draw_dp() #Don't know if DP is guaranteed greater than all the AOs summed. probably.
-    else:
-        ao = draw_ao()
-        dp = ao + draw_dp()
+    ao = [draw_ao() for i in range(len(alts))]
+    #NOTE: Don't know if DP is guaranteed greater than all the AOs summed. probably.
+    dp  = sum(ao) + draw_dp() #Don't know if DP is guaranteed greater than all the AOs summed. probably.
     #an AO (alternate base count) of 0 doesn't make sense
     fields = ['alt', 'ref', 'pos', 'chrom', 'DP', 'AO']
     values = [alts, ref, pos, chrom, dp, ao]

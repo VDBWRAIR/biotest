@@ -14,6 +14,7 @@ install:
     - if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then pip install robotframework-python3; else pip install robotframework; fi
     - python setup.py install
 before_script:
+    - chmod -x tests/test_*.py
     - export PATH=$PATH:$PWD/bin
 script: 
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then nosetests --with-coverage --cover-erase --cover-package=biotest -a '!py27+'; else nosetests --with-coverage --cover-erase --cover-package=biotest; fi 

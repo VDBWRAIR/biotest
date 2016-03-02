@@ -122,7 +122,8 @@ def ref_with_vcf_dicts_strategy_factory(draw):
 def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     '''a generator that returns a single
     VCF dict at a certain position or w/e for testing `call_base`'''
-    an_alt = st.text(alphabet='ACGT', min_size=0, max_size=6).filter(lambda x: x != ref)
+    #NOTE: assumes ALT is never the empty string
+    an_alt = st.text(alphabet='ACGT', min_size=1, max_size=6).filter(lambda x: x != ref)
     alts = draw(st.lists(an_alt, min_size=1, max_size=4))
     draw_ao = lambda: draw(st.integers(min_value=1))
     draw_dp = lambda: draw(st.integers(min_value=0))

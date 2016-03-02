@@ -206,3 +206,40 @@ class TestSeqRecord(BioTestCase):
         f, r = seqrec
         self.assertTrue(f.id, r.id)
 ```
+
+#### VCF Records
+
+You can generate VCF records in a few different ways:
+
+```python
+from biotest import BioTestCase
+from biotest import biohypothesis
+
+class TestVCF(BioTestCase):
+    @given(biohypothesis.vcf_dict_strategy_factory('chr1', 1, 'A'))
+    def test_vcf_record(self, vcfdict):
+        #vcfdict will contain common headers that freebayes outputs
+        # and all fields, regardless if they are FORMAT or INFO are flattened
+        # into the dictionary
+        self.assertEqual(1, vcfrec['pos'])
+
+    @given(biohypothesis.ref_with_vcf_dicts_strategy_factory())
+    def test_vcf_records_with_reference(self, seq_vcfs):
+        # ref_with_vcf_dicts_strategy_factory returns a tuple of
+        # (ref_sequence, iterable of vcf_record_dicts)
+        seq, vcfs = list(seq_vcfs[0]), list(seq_vcfs[1])
+        self.assertGreaterEqual(len(seq), len(vcfs))
+        # Assert all vcf ref seq chunks are same as on actual reference sequence
+        # at specified position
+        for vcf in vcfs:
+            r = vcf['ref']
+            p = vcf['pos']
+            refseq = ''.join(seq[p-1:p+len(r)-1])
+            self.assertEqual(refseq, r)
+
+    @given(biohypothesis.vcf_to_hypothesis_strategy_factory(open('tests/freebayes.header.vcf')))
+    def test_vcf_records_from_vcf_file(self, vcfrow):
+        # Another very simple way to generate vcf rows is to supply an existing
+        # vcf file such as the included test/example freebayes.header.vcf file
+        self.assertIn('DB', vcfrow)
+```

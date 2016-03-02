@@ -104,7 +104,7 @@ def ref_with_vcf_dicts_strategy_factory(draw):
     POSs = Stream() << imap(operator.itemgetter(0), pairs)
     # VCF files start at index 1; python starts at 0
     pairs_offset_1 = imap(lambda x: (x[0] - 1, x[1] - 1), pairs)
-    #grab the pieces of the reference to build our Alts from
+    #grab the pieces of the reference to build our elts from
     chunks = map(lambda x: seq[x[0]:x[1]], pairs_offset_1)
     #random chromosome name
     chrom = draw(st.text(string.ascii_letters))
@@ -122,7 +122,8 @@ def ref_with_vcf_dicts_strategy_factory(draw):
 def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     '''a generator that returns a single
     VCF dict at a certain position or w/e for testing `call_base`'''
-    an_alt = st.text(alphabet='ACGT', min_size=0, max_size=6)
+    #NOTE: assumes ALT is never the empty string
+    an_alt = st.text(alphabet='ACGT', min_size=1, max_size=6).filter(lambda x: x != ref)
     alts = draw(st.lists(an_alt, min_size=1, max_size=4))
     draw_ao = lambda: draw(st.integers(min_value=1))
     draw_dp = lambda: draw(st.integers(min_value=0))

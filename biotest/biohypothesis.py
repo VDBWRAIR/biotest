@@ -127,12 +127,16 @@ def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     alts = draw(st.lists(an_alt, min_size=1, max_size=4))
     draw_ao = lambda: draw(st.integers(min_value=1))
     draw_dp = lambda: draw(st.integers(min_value=0))
+    qr = draw(st.integers(min_value=0))
+    draw_qa = lambda: draw(st.integers(min_value=len(alts)))
     ao = [draw_ao() for i in range(len(alts))]
+    qa = [draw_qa() for i in range(len(alts))]
+
     #NOTE: Don't know if DP is guaranteed greater than all the AOs summed. probably.
     dp  = sum(ao) + draw_dp() #Don't know if DP is guaranteed greater than all the AOs summed. probably.
     #an AO (alternate base count) of 0 doesn't make sense
-    fields = ['alt', 'ref', 'pos', 'chrom', 'DP', 'AO']
-    values = [alts, ref, pos, chrom, dp, ao]
+    fields = ['alt', 'ref', 'pos', 'chrom', 'DP', 'AO', 'QA', 'QR']
+    values = [alts, ref, pos, chrom, dp, ao, qa, qr]
     if None in values:
         raise ValueError("Found none value, did the mapping fail?")
     return dict(zip(fields, values))

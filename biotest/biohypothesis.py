@@ -7,7 +7,7 @@ from fn.iters import accumulate
 from toolz.itertoolz import partition
 import string
 from functools import partial
-from itertools import takewhile, imap, ifilter, izip
+from .compat import imap, ifilter, takewhile, izip
 from hypothesis import strategies as st
 from hypothesis import given, assume
 from functools import wraps
@@ -43,26 +43,14 @@ def make_seqrec(id, seq, quals=None):
         Seq(seq, IUPAC.ambiguous_dna), id=id, description='', letter_annotations=quals
     )
 
-def seq_rec_strategy_factory(min_length=1, max_length=250, min_qual=0, max_qual=40, alphabet='ATGCN', idstrat=st.text()):
-    '''
-    Factory to generate Strategy that build sequence records
 
-    min_length - Minimum sequence length
-    max_length - Maximum sequence length
-    alphabet - Choices for nucleotides
-    min_qual - Minimum quality
-    max_qual - Maximum quality
-    idstrat - strategy that generates sequence ids
-    '''
-    return st.integers(min_value=min_length, max_value=max_length).flatmap(
-        lambda n:
-            st.builds(
-                make_seqrec,
-                idstrat,
-                st.text(alphabet=alphabet, min_size=n, max_size=n),
-                st.lists(st.integers(min_value=min_qual, max_value=max_qual), min_size=n, max_size=n)
-            )
-    )
+@st.composite
+def seq_rec_strategy_factory(draw, min_length=1, max_length=250, min_qual=0, max_qual=40, alphabet='ATGCN', idstrat=st.text()):
+    seq_len = draw(st.integers(min_value=min_length, max_value=max_length))
+    _id = draw(idstrat)
+    seq = draw(st.text(alphabet=alphabet, min_size=seq_len, max_size=seq_len))
+    qual = draw(st.lists(st.integers(min_value=min_qual, max_value=max_qual), min_size=seq_len, max_size=seq_len))
+    return make_seqrec(_id, seq, qual)
 
 def seq_record_strategy(*args, **kwargs):
     '''
@@ -99,39 +87,50 @@ def rolling_sum(elem_min, elem_max, length):
 @st.composite
 def ref_with_vcf_dicts_strategy_factory(draw):
     '''
-    first a generator for increasing size numbers and take slices with them.
-    end up with rolling chunks of the reference of parameterizable (but random) size.
-    sample some of those and those be come the REF field.
-    ALT field is whatever
-    POS field is limited by size of reference
-    chrom, like POS, is same accross all reference
-    AO < DP
+    Generate vcf records for randomish locations along a randomishly generated
+    reference sequence. Each vcf record generator will have a randomish sized
+    "chunk" of the reference to use
+
+    Returns (reference sequence(str), iterable(vcf dicts))
     '''
     seq = draw(st.text(alphabet='ACGT', min_size=10, max_size=20))
     size = len(seq)
-    ranges = draw(rolling_sum(1, 3, size/2).map(lambda xs: ifilter(lambda x: x < size, xs)) )#.filter(_not(bool)))
+    # This gets you a list of numbers that are randomish and increasing
+    ranges = draw(rolling_sum(1, 3, int(size/2)).map(lambda xs: ifilter(lambda x: x < size, xs)) )#.filter(_not(bool)))
     # Stream lets you re-use a generator without draining it.
+    # Pairs will hold start/stop values for each part of sequence
     pairs = Stream() << partition(2, ranges)
+    # POSs will contain the start position of each vcf row
     POSs = Stream() << imap(operator.itemgetter(0), pairs)
     # VCF files start at index 1; python starts at 0
     pairs_offset_1 = imap(lambda x: (x[0] - 1, x[1] - 1), pairs)
-    #grab the pieces of the reference
+    #grab the pieces of the reference to build our elts from
     chunks = map(lambda x: seq[x[0]:x[1]], pairs_offset_1)
     #random chromosome name
     chrom = draw(st.text(string.ascii_letters))
+    # Draw a new record for each of the Positions we have made
     vcfs = map(compose(draw, partial(vcf_dict_strategy_factory, chrom)), POSs, chunks)
     #TODO: ranges must be non-empty. Assuming vcfs for now.
-    assume(len(vcfs) > 0)
+    # vcfs can be a a generator
+    #assume(len(vcfs) > 0)
     return (seq, vcfs)
 
+
+
+#TODO: combine parse_header with ref_with_vcf_dicts_strategy_factory so that the generated VCF records match the reference sequence
 @st.composite
 def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     '''a generator that returns a single
     VCF dict at a certain position or w/e for testing `call_base`'''
-    alts = draw(st.lists(st.text(alphabet='ACGT', min_size=0, max_size=6)), min_size=1, max_size=3)
+    #NOTE: assumes ALT is never the empty string
+    an_alt = st.text(alphabet='ACGT', min_size=1, max_size=6).filter(lambda x: x != ref)
+    alts = draw(st.lists(an_alt, min_size=1, max_size=4))
+    draw_ao = lambda: draw(st.integers(min_value=1))
+    draw_dp = lambda: draw(st.integers(min_value=0))
+    ao = [draw_ao() for i in range(len(alts))]
+    #NOTE: Don't know if DP is guaranteed greater than all the AOs summed. probably.
+    dp  = sum(ao) + draw_dp() #Don't know if DP is guaranteed greater than all the AOs summed. probably.
     #an AO (alternate base count) of 0 doesn't make sense
-    ao = draw(st.integers(min_value=1))
-    dp = ao + draw(st.integers(min_value=1))
     fields = ['alt', 'ref', 'pos', 'chrom', 'DP', 'AO']
     values = [alts, ref, pos, chrom, dp, ao]
     if None in values:
@@ -139,18 +138,28 @@ def vcf_dict_strategy_factory(draw, chrom, pos, ref):
     return dict(zip(fields, values))
 
 #TODO: now consensus should throw error if AO > DP
-def parse_header(lines):
+def vcf_to_hypothesis_strategy_factory(lines):
+    '''
+    Takes an iterator that yields vcf header lines and returns a
+    vcf dictionary strategy
+    '''
     def schema2strategies(schema):
         types = {
+            'Character' : st.characters(),
+            'Flag' : st.booleans(),
             'Integer' : st.integers(),
             'Float' : st.floats(),
             'String' : st.text(max_size=10)
         }
         strategy = types[schema['Type']]
         return schema['ID'], strategy
+    # Will contain only lines that start with #(non vcf rows)
     header =  takewhile(lambda x: x[0] == '#', lines)
+    # Function to filter and get only INFO and FORMAT header lines
     isMedata = lambda x: x.startswith("##INFO") or x.startswith("##FORMAT")
+    # Filters the header to exclude all the other junk
     metadata = ifilter(isMedata, header)
+    # Parse each header line of interest
     result = imap(compose(schema2strategies, parse_header_line), metadata)
     return st.fixed_dictionaries(dict(result))
 
@@ -162,7 +171,19 @@ def parse_header_line(lineString):
     sentence = quotedString(r'"').setParseAction(removeQuotes)
     def make_kv(key, valParser):
         return Literal(key) + Literal("=").suppress() + valParser
-    keyVal = make_kv("ID", Word(alphas + nums + '.')) | make_kv("Type", (Literal("Float") | Literal("String") | Literal("Integer"))) | make_kv("Description", sentence) | make_kv("Number",  Word(alphas + nums))
+    keyVal = make_kv(
+        "ID", Word(alphas + nums + '.')
+    ) | make_kv(
+            "Type", (
+                Literal("Float") |
+                Literal("String") |
+                Literal("Integer") |
+                Literal("Character") |
+                Literal("Flag")
+            )
+        ) | \
+        make_kv("Description", sentence) | \
+        make_kv("Number",  Word(alphas + nums))
     fields = delimitedList(keyVal, ",")
     line = lineName + Literal("=<").suppress() + fields + Literal(">").suppress()
     pairs = lambda xs: [] if len(xs) == 0 else [(xs[0], xs[1])] + pairs(xs[2:])
